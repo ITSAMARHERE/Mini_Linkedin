@@ -16,6 +16,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const __dirname = path.resolve();
 
+// CORS configuration
 if (process.env.NODE_ENV !== "production") {
 	app.use(
 		cors({
@@ -25,24 +26,43 @@ if (process.env.NODE_ENV !== "production") {
 	);
 }
 
+// Middleware
 app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 
+// API Routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/posts", postRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/connections", connectionRoutes);
 
+// Production setup
 if (process.env.NODE_ENV === "production") {
-	app.use(express.static(path.join(__dirname, "/frontend/dist")));
+	// Serve static files from frontend dist folder
+	const frontendDistPath = path.join(__dirname, "frontend", "dist");
+	
+	app.use(express.static(frontendDistPath));
 
+	// Handle React routing, return all requests to React app
 	app.get("*", (req, res) => {
-		res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
+		const indexPath = path.resolve(frontendDistPath, "index.html");
+		res.sendFile(indexPath);
+	});
+} else {
+	// Development route
+	app.get("/", (req, res) => {
+		res.send("API is running in development mode");
 	});
 }
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+	console.error(err.stack);
+	res.status(500).json({ message: "Something went wrong!" });
+});
+
 app.listen(PORT, () => {
-    console.log(`Server is listening on ${PORT}....`);
+    console.log(`Server is listening on port ${PORT}....`);
     connectDB();
 });
