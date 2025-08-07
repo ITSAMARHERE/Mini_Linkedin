@@ -16,14 +16,26 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const __dirname = path.resolve();
 
-if (process.env.NODE_ENV !== "production") {
-	app.use(
-		cors({
-			origin: "https://mini-linkedin-backend-r10r.onrender.com",
-			credentials: true,
-		})
-	);
-}
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://mini-linkedin-frontend-enib.onrender.com"
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
+
 
 app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
