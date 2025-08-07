@@ -3,13 +3,28 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { sendWelcomeEmail } from "../emails/emailHandlers.js";
 
+// Helper function to set cookie with consistent options
+const setCookie = (res, token) => {
+	const cookieOptions = {
+		httpOnly: true,
+		maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
+		sameSite: "None", // Required for cross-origin
+		secure: process.env.NODE_ENV === "production", // HTTPS in production
+	};
+	
+	console.log("Setting cookie with options:", cookieOptions);
+	res.cookie("jwt-linkedin", token, cookieOptions);
+};
+
 export const signup = async (req, res) => {
 	try {
+		console.log("Signup request received");
 		const { name, username, email, password } = req.body;
 
 		if (!name || !username || !email || !password) {
 			return res.status(400).json({ message: "All fields are required" });
 		}
+		
 		const existingEmail = await User.findOne({ email });
 		if (existingEmail) {
 			return res.status(400).json({ message: "Email already exists" });
@@ -35,18 +50,22 @@ export const signup = async (req, res) => {
 		});
 
 		await user.save();
+		console.log("User created successfully:", user.username);
 
 		const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "3d" });
+		console.log("JWT token generated");
 
-		res.cookie("jwt-linkedin", token, {
-			httpOnly: true,
-			maxAge: 3 * 24 * 60 * 60 * 1000,
-			sameSite: "None",
-			secure: process.env.NODE_ENV === "production",
+		setCookie(res, token);
+
+		res.status(201).json({ 
+			message: "User registered successfully",
+			user: {
+				_id: user._id,
+				name: user.name,
+				username: user.username,
+				email: user.email
+			}
 		});
-
-
-		res.status(201).json({ message: "User registered successfully" });
 
 		const profileUrl = process.env.CLIENT_URL + "/profile/" + user.username;
 
@@ -63,7 +82,12 @@ export const signup = async (req, res) => {
 
 export const login = async (req, res) => {
 	try {
+		console.log("Login request received");
 		const { username, password } = req.body;
+
+		if (!username || !password) {
+			return res.status(400).json({ message: "Username and password are required" });
+		}
 
 		const user = await User.findOne({ username });
 		if (!user) {
@@ -75,15 +99,22 @@ export const login = async (req, res) => {
 			return res.status(400).json({ message: "Invalid credentials" });
 		}
 
-		const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "3d" });
-		await res.cookie("jwt-linkedin", token, {
-			httpOnly: true,
-			maxAge: 3 * 24 * 60 * 60 * 1000,
-			sameSite: "strict",
-			secure: process.env.NODE_ENV === "production",
-		});
+		console.log("User authenticated successfully:", user.username);
 
-		res.json({ message: "Logged in successfully" });
+		const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "3d" });
+		console.log("JWT token generated for login");
+
+		setCookie(res, token);
+
+		res.json({ 
+			message: "Logged in successfully",
+			user: {
+				_id: user._id,
+				name: user.name,
+				username: user.username,
+				email: user.email
+			}
+		});
 	} catch (error) {
 		console.error("Error in login controller:", error);
 		res.status(500).json({ message: "Server error" });
@@ -91,12 +122,18 @@ export const login = async (req, res) => {
 };
 
 export const logout = (req, res) => {
-	res.clearCookie("jwt-linkedin");
+	console.log("Logout request received");
+	res.clearCookie("jwt-linkedin", {
+		httpOnly: true,
+		sameSite: "None",
+		secure: process.env.NODE_ENV === "production",
+	});
 	res.json({ message: "Logged out successfully" });
 };
 
 export const getCurrentUser = async (req, res) => {
 	try {
+		console.log("getCurrentUser called for user:", req.user?.username);
 		res.json(req.user);
 	} catch (error) {
 		console.error("Error in getCurrentUser controller:", error);
