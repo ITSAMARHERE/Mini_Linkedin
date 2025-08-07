@@ -1,11 +1,12 @@
 import axios from "axios";
 
-const BASE_URL =
+const BASE_URL = 
   import.meta.env.MODE === "development"
-    ? "https://mini-linkedin-backend-r10r.onrender.com/api/v1"
-    : "https://mini-linkedin-backend-r10r.onrender.com/api/v1"; // same for production
+    ? "http://localhost:5000/api/v1"  // Development URL
+    : "https://mini-linkedin-backend-r10r.onrender.com/api/v1/api/v1"; // Production URL (relative path since we're serving from same domain)
 
 export const axiosInstance = axios.create({
   baseURL: BASE_URL,
   withCredentials: true,
 });
+
