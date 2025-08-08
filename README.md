@@ -4,7 +4,7 @@ A full-stack LinkedIn clone built with the MERN stack, featuring real-time socia
 
 ## 🚀 Live Demo
 
-**[View Live Application](https://unlinked-siot.onrender.com/)**
+**[View Live Application](https://mini-linkedin-frontend-enib.onrender.com/)**
 
 ## 📋 Table of Contents
 
