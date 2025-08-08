@@ -1,4 +1,4 @@
-# Mini_Linkedin - LinkedIn Clone ✨
+# Mini_Linkedin ✨
 
 A full-stack LinkedIn clone built with the MERN stack, featuring real-time social networking capabilities, professional networking tools, and a modern responsive design.
 
